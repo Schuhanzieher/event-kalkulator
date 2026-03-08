@@ -1299,18 +1299,8 @@ function sendEmailTo(fixedEmail) {
   var subject = encodeURIComponent('Angebot: ' + eventName + ' \u2013 Munkenfred Records');
   var body = encodeURIComponent(text);
   var mailtoUrl = 'mailto:' + encodeURIComponent(email) + '?subject=' + subject + '&body=' + body;
-
-  if (mailtoUrl.length > 2000) {
-    navigator.clipboard.writeText(text).then(function() {
-      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + subject, '_blank', 'noopener,noreferrer');
-      alert('Der Angebotstext wurde in die Zwischenablage kopiert.\n\nDas E-Mail-Programm \u00f6ffnet sich \u2013 f\u00fcge den Text mit Strg+V / Cmd+V ein.');
-    }).catch(function() {
-      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + subject, '_blank', 'noopener,noreferrer');
-      alert('Bitte den Angebotstext manuell kopieren und in die E-Mail einf\u00fcgen.');
-    });
-  } else {
-    window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
-  }
+  navigator.clipboard.writeText(text).catch(function() {});
+  window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
 }
 
 /* ── Angebot einreichen (an beide Adressen) ── */
@@ -1324,24 +1314,12 @@ function submitAngebot() {
   var statusEl = document.getElementById('submitStatus');
   var btn = document.getElementById('submitBtn');
 
-  if (mailtoUrl.length > 2000) {
-    navigator.clipboard.writeText(text).then(function() {
-      window.open('mailto:' + to + '?subject=' + subject, '_blank', 'noopener,noreferrer');
-      statusEl.textContent = '\u2705 Text in Zwischenablage \u2013 bitte mit Strg+V / Cmd+V einf\u00fcgen';
-      btn.textContent = 'Eingereicht \u2713';
-      btn.style.background = '#34c759';
-      setTimeout(function() { btn.textContent = 'Angebot einreichen \u2192'; btn.style.background = ''; statusEl.textContent = ''; }, 5000);
-    }).catch(function() {
-      window.open('mailto:' + to + '?subject=' + subject, '_blank', 'noopener,noreferrer');
-      statusEl.textContent = 'Bitte den Text manuell kopieren und einf\u00fcgen.';
-    });
-  } else {
-    window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
-    btn.textContent = 'Eingereicht \u2713';
-    btn.style.background = '#34c759';
-    statusEl.textContent = '\u2705 E-Mail-Programm ge\u00f6ffnet \u2013 senden nicht vergessen!';
-    setTimeout(function() { btn.textContent = 'Angebot einreichen \u2192'; btn.style.background = ''; statusEl.textContent = ''; }, 5000);
-  }
+  navigator.clipboard.writeText(text).catch(function() {});
+  window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
+  btn.textContent = 'Eingereicht \u2713';
+  btn.style.background = '#34c759';
+  statusEl.textContent = '\u2705 E-Mail ge\u00f6ffnet \u2013 senden nicht vergessen!';
+  setTimeout(function() { btn.textContent = 'Angebot einreichen \u2192'; btn.style.background = ''; statusEl.textContent = ''; }, 5000);
 }
 
 /* ── Init ── */
