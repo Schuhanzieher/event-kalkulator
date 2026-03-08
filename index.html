@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:; script-src 'unsafe-inline'; style-src 'unsafe-inline';">
+<title>Event-Kalkulator – Campingplatz Machern × Munkenfred Records</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --card-alt: #fafafa;
+    --accent: #1d7a43;
+    --accent-light: #22924f;
+    --accent-bg: rgba(29,122,67,0.06);
+    --text: #1d1d1f;
+    --text-dim: #86868b;
+    --border: #d2d2d7;
+    --danger: #ff3b30;
+    --warning: #e67e22;
+    --blue: #0071e3;
+    --radius: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    --shadow-hover: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 20px 16px;
+    font-size: 15px; line-height: 1.47;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .header { text-align: center; padding: 20px 20px 16px; margin-bottom: 20px; }
+  .header h1 { font-size: 1.65em; font-weight: 700; color: var(--text); margin-bottom: 4px; letter-spacing: -0.02em; }
+  .header .subtitle { color: var(--text-dim); font-size: 0.88em; font-weight: 400; }
+  .logo-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.82em; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+  .logo-row span { color: var(--accent); font-weight: 600; }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* ── Cards: Collapsible Sections ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0; margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; transition: box-shadow 0.3s; }
+  .card:hover { box-shadow: var(--shadow-hover); }
+  .card h2 { font-size: 0.95em; color: var(--text); margin: 0; padding: 16px 24px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-weight: 600; letter-spacing: -0.01em; user-select: none; -webkit-user-select: none; }
+  .card h2::after { content: '\25B4'; font-size: 0.7em; color: var(--text-dim); transition: transform 0.3s; }
+  .card h2.collapsed::after { transform: rotate(180deg); }
+  .card h2.no-collapse::after { content: none; }
+  .card-body { padding: 0 24px 20px; }
+  .card-body.anim { transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease; overflow: hidden; }
+  .card-body.collapsed { max-height: 0 !important; opacity: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
+  .card h2 .section-badge { font-size: 0.72em; font-weight: 500; color: var(--text-dim); background: var(--card-alt); border: 1px solid var(--border); padding: 2px 10px; border-radius: 20px; margin-right: 8px; }
+  .card h3 { font-size: 0.78em; color: var(--text-dim); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+  /* ── Form Rows ── */
+  .form-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.04); gap: 12px; }
+  .form-row:last-child { border-bottom: none; }
+  .form-row label { flex: 1; font-size: 0.88em; font-weight: 500; color: var(--text); }
+  .form-row label small { display: block; color: var(--text-dim); font-size: 0.82em; margin-top: 1px; font-weight: 400; }
+
+  /* ── Inputs (Apple-like) ── */
+  select, input[type="number"], input[type="text"], input[type="date"] {
+    background: var(--card-alt); color: var(--text); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 12px; font-size: 0.88em; outline: none; transition: all 0.2s;
+    font-family: inherit;
+  }
+  select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,122,67,0.1); }
+  input[type="number"] { width: 80px; }
+  input[type="text"] { width: 220px; }
+  input[type="date"] { width: 155px; }
+  input[type="email"] { background: var(--card-alt); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 0.88em; outline: none; transition: all 0.2s; font-family: inherit; }
+  input[type="email"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,122,67,0.1); }
+
+  /* ── Toggle (smaller) ── */
+  .toggle { position: relative; width: 42px; height: 24px; appearance: none; -webkit-appearance: none; background: #d2d2d7; border-radius: 12px; cursor: pointer; transition: background 0.25s; border: none; outline: none; flex-shrink: 0; }
+  .toggle:checked { background: var(--accent); }
+  .toggle::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: transform 0.25s; box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .toggle:checked::before { transform: translateX(18px); }
+
+  /* ── Paket Grid ── */
+  .paket-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+  .paket-option { background: var(--card-alt); border: 2px solid transparent; border-radius: 14px; padding: 16px 12px; cursor: pointer; transition: all 0.25s; text-align: center; }
+  .paket-option:hover { border-color: var(--border); transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+  .paket-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .paket-option .pn { font-weight: 700; font-size: 1.3em; color: var(--accent); letter-spacing: -0.02em; }
+  .paket-option .pl { font-size: 0.78em; color: var(--text-dim); margin: 2px 0 6px; font-weight: 500; }
+  .paket-option .pp { font-size: 1.35em; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .paket-option .pp small { font-size: 0.45em; color: var(--text-dim); font-weight: 400; }
+  .paket-option .pd { font-size: 0.72em; color: var(--text-dim); margin-top: 6px; line-height: 1.4; text-align: left; }
+
+  /* ── Day Planner ── */
+  .day-planner { margin-top: 8px; }
+  .day-row { display: flex; align-items: center; background: var(--card-alt); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 6px; gap: 12px; flex-wrap: wrap; transition: box-shadow 0.2s; }
+  .day-row:hover { box-shadow: var(--shadow-hover); }
+  .day-row .day-num { font-weight: 700; color: var(--accent); min-width: 50px; font-size: 0.9em; }
+  .day-row select { width: auto; min-width: 160px; font-size: 0.85em; }
+  .day-row .day-info { font-size: 0.78em; color: var(--text-dim); margin-left: auto; }
+  .day-row .day-price { font-weight: 700; min-width: 75px; text-align: right; color: var(--text); font-size: 0.95em; }
+  .day-row .remove-day { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.1em; padding: 2px 6px; border-radius: 6px; transition: all 0.2s; }
+  .day-row .remove-day:hover { background: rgba(255,59,48,0.1); color: var(--danger); }
+  .add-day-btn { background: transparent; border: 1.5px dashed var(--border); color: var(--text-dim); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; font-size: 0.88em; font-weight: 500; transition: all 0.2s; margin-top: 6px; }
+  .add-day-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+  /* ── Result Card ── */
+  .result-card { background: var(--card); border: 1.5px solid var(--accent); }
+  .result-card:hover { box-shadow: var(--shadow-hover); }
+  .result-grid { display: grid; gap: 10px; margin-bottom: 16px; }
+  .result-block { background: var(--card-alt); border-radius: 14px; padding: 16px; text-align: center; }
+  .result-block .rl { font-size: 0.72em; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; font-weight: 600; }
+  .result-block .rv { font-size: 1.8em; font-weight: 700; letter-spacing: -0.03em; }
+  .result-block .rv.price { color: var(--accent); }
+  .result-block .rv.days { color: var(--blue); }
+  .result-block .rh { font-size: 0.72em; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── Breakdown ── */
+  .breakdown { background: var(--card-alt); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 10px; }
+  .breakdown h3 { margin-top: 0; margin-bottom: 10px; color: var(--text); font-size: 0.88em; }
+  .br-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.85em; }
+  .br-row.sub { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 8px; font-weight: 600; }
+  .br-row.total { border-top: 2px solid var(--accent); margin-top: 8px; padding-top: 10px; font-weight: 700; font-size: 0.95em; }
+  .br-row .lbl { color: var(--text-dim); }
+  .br-row .val { font-weight: 500; }
+  .br-row .val.disc { color: var(--accent); }
+  .br-row .val.add { color: var(--warning); }
+
+  /* ── Angebot Box ── */
+  .angebot-box { background: var(--card-alt); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-top: 12px; font-family: 'SF Mono', 'Menlo', 'Courier New', monospace; font-size: 0.78em; line-height: 1.55; white-space: pre-wrap; position: relative; max-height: 480px; overflow-y: auto; }
+  .copy-btn { position: sticky; top: 0; float: right; background: var(--accent); color: white; border: none; border-radius: 8px; padding: 6px 14px; font-size: 0.8em; cursor: pointer; transition: all 0.2s; z-index: 1; font-weight: 500; font-family: inherit; }
+  .copy-btn:hover { background: var(--accent-light); }
+  .copy-btn.copied { background: #34c759; }
+
+  /* ── Hint ── */
+  .hint { background: rgba(0,113,227,0.04); border: 1px solid rgba(0,113,227,0.12); border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 0.82em; line-height: 1.45; }
+  .hint strong { color: var(--blue); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 2px; margin-bottom: 12px; background: var(--card-alt); border-radius: 10px; padding: 3px; border: 1px solid var(--border); }
+  .tab { flex: 1; padding: 8px 12px; background: transparent; border: none; border-radius: 8px; cursor: pointer; font-size: 0.82em; color: var(--text-dim); transition: all 0.2s; font-weight: 500; text-align: center; }
+  .tab.active { background: white; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Day Type Info (collapsed by default, toggle via JS) ── */
+  .day-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .day-type-tile { background: var(--card-alt); border-radius: 10px; padding: 10px 14px; border-left: 3px solid var(--border); }
+  .day-type-tile strong { display: block; font-size: 0.85em; margin-bottom: 2px; }
+  .day-type-tile .tile-desc { color: var(--text-dim); font-size: 0.78em; line-height: 1.4; }
+  .day-info-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78em; color: var(--text-dim); cursor: pointer; margin-bottom: 10px; padding: 4px 10px; border-radius: 6px; transition: all 0.2s; border: none; background: none; font-family: inherit; }
+  .day-info-toggle:hover { color: var(--accent); background: var(--accent-bg); }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    body { padding: 10px 8px; }
+    .paket-grid { grid-template-columns: repeat(2, 1fr); }
+    .result-grid { grid-template-columns: 1fr !important; }
+    .result-block .rv { font-size: 1.4em; }
+    .day-row { flex-direction: column; align-items: flex-start; padding: 10px 14px; }
+    .day-row .day-price { margin-left: 0; }
+    .day-row .day-info { margin-left: 0; }
+    input[type="text"] { width: 100%; max-width: 220px; }
+    .card-body { padding: 0 16px 16px; }
+    .card h2 { padding: 14px 16px; }
+    .day-type-grid { grid-template-columns: 1fr 1fr; }
+    .tabs { flex-wrap: wrap; }
+  }
+  @media print {
+    body { background: white; color: black; padding: 10px; }
+    .card { border: 1px solid #ccc; break-inside: avoid; box-shadow: none; }
+    .copy-btn, .add-day-btn, .remove-day, .tabs, .send-area, .day-info-toggle { display: none; }
+    .tab-content { display: block !important; }
+    .card-body { max-height: none !important; opacity: 1 !important; }
+  }
+  /* Rider-Formular */
+  .rider-section { background: var(--card-alt); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  .rider-head { font-size: 1.05em; font-weight: 700; color: var(--accent); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+  .rider-row { display: flex; align-items: center; padding: 8px 0; gap: 12px; border-bottom: 1px solid rgba(0,0,0,0.04); flex-wrap: wrap; }
+  .rider-row:last-child { border-bottom: none; }
+  .rider-row > label { flex: 0 0 180px; font-size: 0.92em; font-weight: 500; color: var(--text); }
+  .rider-input { background: white; color: var(--text); border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 0.92em; outline: none; transition: all 0.2s; flex: 1; min-width: 120px; }
+  .rider-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(46,139,87,0.1); }
+  .rider-unit { font-size: 0.85em; color: var(--text-dim); white-space: nowrap; }
+  .rider-yn { display: flex; gap: 6px; }
+  .rider-radio { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .rider-radio input[type="radio"] { appearance: none; -webkit-appearance: none; width: 0; height: 0; position: absolute; opacity: 0; }
+  .rider-radio span { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.88em; font-weight: 500; background: #e8ecf0; color: var(--text-dim); transition: all 0.2s; cursor: pointer; border: 2px solid transparent; }
+  .rider-radio input[type="radio"]:checked + span { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .rider-check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .rider-chip { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: white; border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 0.9em; }
+  .rider-chip:hover { border-color: var(--accent); }
+  .rider-chip input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 6px; flex-shrink: 0; position: relative; transition: all 0.2s; cursor: pointer; background: white; }
+  .rider-chip input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+  .rider-chip input[type="checkbox"]:checked::after { content: '\2713'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: white; font-size: 13px; font-weight: 700; }
+  .rider-chip span { font-weight: 500; color: var(--text); }
+  @media (max-width: 700px) {
+    .rider-check-grid { grid-template-columns: repeat(2, 1fr); }
+    .rider-row > label { flex: 0 0 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-row"><span>Campingplatz Machern</span> &times; <span>Munkenfred Records</span></div>
+  <h1>Event-Kalkulator</h1>
+  <div class="subtitle">Planen &middot; Kalkulieren &middot; Versenden</div>
+</div>
+
+<div class="container">
+
+<!-- 1. EVENT-DETAILS -->
+<div class="card">
+  <h2 onclick="toggleCard(this)">Event-Details</h2>
+  <div class="card-body">
+  <div class="form-row">
+    <label>Veranstaltungsname</label>
+    <input type="text" id="eventName" placeholder="z.B. Seefest Machern 2026" maxlength="120" oninput="calc()">
+  </div>
+  <div class="form-row">
+    <label>Startdatum</label>
+    <input type="date" id="eventDate" oninput="syncEndDate();calc()">
+  </div>
+  <div class="form-row">
+    <label>Enddatum<small>Wird automatisch aus Tagesplaner berechnet</small></label>
+    <input type="date" id="eventEndDate" oninput="syncDaysFromEnd();calc()">
+  </div>
+  <div class="form-row">
+    <label>Preisanzeige</label>
+    <select id="preisTyp" onchange="calc()">
+      <option value="netto" selected>Netto (Kleinunternehmer §19 UStG)</option>
+      <option value="brutto">Brutto (inkl. 19% MwSt)</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label>Veranstalter / Auftraggeber</label>
+    <input type="text" id="veranstalter" placeholder="z.B. Campingplatz Machern" maxlength="120" oninput="calc()">
+  </div>
+  <div class="form-row">
+    <label>Erwartete Besucher (max.)</label>
+    <input type="number" id="besucher" value="150" min="10" max="2000" oninput="calc()">
+  </div>
+  </div>
+</div>
+
+<!-- 2. PAKET -->
+<div class="card">
+  <h2 onclick="toggleCard(this)">Technik-Paket <span class="section-badge" id="paketBadge">M</span></h2>
+  <div class="card-body">
+  <div class="paket-grid">
+    <div class="paket-option" data-p="S" onclick="selPaket('S')">
+      <div class="pn">S</div><div class="pl">Akustik / Vocal</div>
+      <div class="pp">350 <small>EUR</small></div>
+      <div class="pd">PA + Mischpult<br>8 Kanäle FOH<br>Kein Schlagzeug/Licht</div>
+    </div>
+    <div class="paket-option selected" data-p="M" onclick="selPaket('M')">
+      <div class="pn">M</div><div class="pl">Band komplett</div>
+      <div class="pp">500 <small>EUR</small></div>
+      <div class="pd">PA + Sub<br>24 Kanäle FOH<br>10× Monitoring<br>Schlagzeug-Abnahme</div>
+    </div>
+    <div class="paket-option" data-p="L" onclick="selPaket('L')">
+      <div class="pn">L</div><div class="pl">Band + Licht</div>
+      <div class="pp">650 <small>EUR</small></div>
+      <div class="pd">Alles aus M<br>+ Lichttechnik<br>+ DMX-Steuerung</div>
+    </div>
+    <div class="paket-option" data-p="XL" onclick="selPaket('XL')">
+      <div class="pn">XL</div><div class="pl">Festival</div>
+      <div class="pp">850 <small>EUR</small></div>
+      <div class="pd">Alles aus L<br>Viele Acts<br>Ganzer Tag 10h+</div>
+    </div>
+  </div>
+  <div class="hint"><strong>Tipp:</strong> Das Paket gilt als Basiskonfiguration. Im Tagesplaner wird pro Tag berechnet.</div>
+  </div>
+</div>
+
+<!-- 3. TAGESPLANER -->
+<div class="card">
+  <h2 onclick="toggleCard(this)">Tagesplaner <span class="section-badge" id="daysBadge">1 Tag</span></h2>
+  <div class="card-body">
+  <button class="day-info-toggle" onclick="toggleDayInfo(this)">&#9432; Tagestypen anzeigen</button>
+  <div class="day-type-grid" style="display:none;">
+    <div class="day-type-tile" style="border-left-color:#2e8b57;">
+      <strong style="color:#2e8b57;">Aufbautag</strong>
+      <span class="tile-desc">40% vom Paketpreis<br>Anlieferung, Verkabelung, Linecheck</span>
+    </div>
+    <div class="day-type-tile" style="border-left-color:#e67e22;">
+      <strong style="color:#e67e22;">Eventtag</strong>
+      <span class="tile-desc">100% vom Paketpreis<br>Soundcheck + Live-Mixing (bis 6h)</span>
+    </div>
+    <div class="day-type-tile" style="border-left-color:#2d7dd2;">
+      <strong style="color:#2d7dd2;">Aufbau + Event</strong>
+      <span class="tile-desc">120% vom Paketpreis<br>Aufbau morgens + Event abends</span>
+    </div>
+    <div class="day-type-tile" style="border-left-color:#dc3545;">
+      <strong style="color:#dc3545;">Abbautag</strong>
+      <span class="tile-desc">30% vom Paketpreis<br>Abbau, Transport, R&uuml;ckgabe</span>
+    </div>
+    <div class="day-type-tile" style="border-left-color:#8e44ad;">
+      <strong style="color:#8e44ad;">Standby / Ruhetag</strong>
+      <span class="tile-desc">20% vom Paketpreis<br>Technik steht, kein Betrieb</span>
+    </div>
+  </div>
+
+  <div class="day-planner" id="dayPlanner"></div>
+  <div class="add-day-btn" onclick="addDay()">+ Tag hinzuf&uuml;gen</div>
+  </div>
+</div>
+
+<!-- 4. RABATTE & EXTRAS -->
+<div class="card">
+  <h2 onclick="toggleCard(this)">Rabatte &amp; Extras</h2>
+  <div class="card-body">
+
+  <h3>Rabatte</h3>
+  <div class="form-row">
+    <label>Campingplatz-Rabatt (30%)<small>Sonderkonditionen für den Campingplatz Machern</small></label>
+    <input type="checkbox" class="toggle" id="campingRabatt" checked onchange="calc()">
+  </div>
+  <div class="form-row">
+    <label>Aufbauhelfer vom Veranstalter<small>250 EUR Ersparnis pro Helfer</small></label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="number" id="helfer" value="2" min="0" max="10" style="width:60px" oninput="calc()">
+      <span style="font-size:0.8em;color:var(--text-dim)">&times; 250 EUR</span>
+    </div>
+  </div>
+  <div class="form-row">
+    <label>Wiederholungsbuchung (&minus;5%)<small>Ab dem 2. Event</small></label>
+    <input type="checkbox" class="toggle" id="wiederhol" onchange="calc()">
+  </div>
+  <div class="form-row">
+    <label>Mehrtages-Rabatt<small>Automatisch ab 3+ Eventtagen: &minus;10% auf Eventtage</small></label>
+    <input type="checkbox" class="toggle" id="mehrtage" checked onchange="calc()" disabled>
+  </div>
+
+  <h3>Extras</h3>
+  <div class="form-row">
+    <label>Konzert-Aufzeichnung<small>Stereo-Mixdown pro Eventtag</small></label>
+    <input type="checkbox" class="toggle" id="aufzeichnung" onchange="calc()">
+  </div>
+  <div class="form-row">
+    <label>Livestream-Signal<small>Signalausgabe für Kamera/Stream</small></label>
+    <input type="checkbox" class="toggle" id="livestream" onchange="calc()">
+  </div>
+  <div class="form-row" style="flex-wrap:wrap;">
+    <label>Nacht-Bewachung Technik<small>Equipment &uuml;ber Nacht gesichert</small></label>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <select id="bewachungTyp" onchange="calc()" style="min-width:200px;">
+        <option value="veranstalter" selected>Vom Veranstalter organisiert (0 &euro;)</option>
+        <option value="platz">Vom Campingplatz (100 &euro;/Nacht)</option>
+        <option value="munkenfred">Von Munkenfred Records (150 &euro;/Nacht)</option>
+      </select>
+      <input type="number" id="bewachung" value="0" min="0" max="10" style="width:60px" oninput="calc()">
+      <span id="bewachungPreis" style="font-size:0.85em;color:var(--text-dim);min-width:70px;"></span>
+    </div>
+  </div>
+  <div class="form-row">
+    <label>Kurzfristig (&lt; 7 Tage Vorlauf)</label>
+    <input type="checkbox" class="toggle" id="kurzfristig" onchange="calc()">
+  </div>
+  <div class="form-row">
+    <label>Anfahrt (außerhalb Machern)<small>Einfache Strecke in km</small></label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="number" id="anfahrt" value="0" min="0" max="200" style="width:70px" oninput="calc()">
+      <span style="font-size:0.8em;color:var(--text-dim)">km &times; 0,35 EUR</span>
+    </div>
+  </div>
+
+  <h3>Hinweise (automatisch ins Angebot)</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+  <div class="form-row">
+    <label>GEMA<small>Veranstalter verantwortlich</small></label>
+    <input type="checkbox" class="toggle" id="gemaHinweis" checked onchange="calc()">
+  </div>
+  <div class="form-row">
+    <label>L&auml;rmschutz<small>Nachtruhe ab 22:00</small></label>
+    <input type="checkbox" class="toggle" id="laermHinweis" checked onchange="calc()">
+  </div>
+  <div class="form-row">
+    <label>Strom<small>Mind. 2&times; 16A</small></label>
+    <input type="checkbox" class="toggle" id="stromHinweis" checked onchange="calc()">
+  </div>
+  <div class="form-row">
+    <label>Wetter-Klausel<small>Abbruch-Regelung</small></label>
+    <input type="checkbox" class="toggle" id="wetterHinweis" checked onchange="calc()">
+  </div>
+  </div>
+  </div>
+</div>
+
+<!-- 5. ERGEBNIS -->
+<div class="card result-card">
+  <h2 style="cursor:default;" class="no-collapse">Ergebnis</h2>
+  <div class="card-body">
+  <div class="result-grid" style="grid-template-columns: repeat(2, 1fr);">
+    <div class="result-block">
+      <div class="rl">Angebotspreis</div>
+      <div class="rv price" id="rPrice">&ndash;</div>
+      <div class="rh">An Munkenfred Records</div>
+    </div>
+    <div class="result-block">
+      <div class="rl">Event-Dauer</div>
+      <div class="rv days" id="rDays">&ndash;</div>
+      <div class="rh">Tage gesamt</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('breakdown')">Aufschlüsselung</div>
+    <div class="tab" onclick="showTab('angebot')">Angebotstext</div>
+    <div class="tab" onclick="showTab('timeline')">Zeitplan</div>
+    <div class="tab" onclick="showTab('rider')">Technik-Rider</div>
+  </div>
+
+  <!-- Tab: Aufschlüsselung -->
+  <div class="tab-content active" id="tab-breakdown">
+    <div class="breakdown" id="breakdownContent"></div>
+  </div>
+
+  <!-- Tab: Angebotstext -->
+  <div class="tab-content" id="tab-angebot">
+    <div class="angebot-box" id="angebotText">
+      <div style="position:sticky;top:0;float:right;z-index:1;">
+        <button class="copy-btn" onclick="copyText()" id="copyBtn">Angebotstext kopieren</button>
+      </div>
+      <span id="angebotInner">Wird generiert...</span>
+    </div>
+    <!-- Versenden-Bereich -->
+    <div class="send-area" style="margin-top:16px;background:var(--card-alt);border:1.5px solid var(--border);border-radius:12px;padding:20px;">
+      <h3 style="margin:0 0 14px;font-size:1em;color:var(--accent);text-transform:none;letter-spacing:0;">Angebot versenden</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:0.92em;color:var(--text-dim);white-space:nowrap;font-weight:500;">E-Mail an:</label>
+        <input type="email" id="sendToEmail" placeholder="kunde@beispiel.de" maxlength="120" style="flex:1;min-width:220px;">
+        <button onclick="sendEmailTo()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:10px 20px;font-size:0.95em;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-weight:500;">Angebot per E-Mail senden</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+        <button onclick="sendEmailTo('emailadresse15@yahoo.de')" style="background:white;color:var(--text-dim);border:1.5px solid var(--border);border-radius:8px;padding:8px 16px;font-size:0.88em;cursor:pointer;transition:all 0.2s;font-weight:500;">Kopie an Campingplatz-B&uuml;ro</button>
+        <button onclick="sendEmailTo('info@munkenfredrecords.de')" style="background:white;color:var(--text-dim);border:1.5px solid var(--border);border-radius:8px;padding:8px 16px;font-size:0.88em;cursor:pointer;transition:all 0.2s;font-weight:500;">Kopie an Munkenfred Records</button>
+      </div>
+      <p style="font-size:0.85em;color:var(--text-dim);margin-top:10px;">&Ouml;ffnet dein E-Mail-Programm mit dem Angebotstext. Bei langen Texten wird der Inhalt automatisch in die Zwischenablage kopiert.</p>
+    </div>
+  </div>
+
+  <!-- Tab: Zeitplan -->
+  <div class="tab-content" id="tab-timeline">
+    <div class="breakdown" id="timelineContent"></div>
+  </div>
+
+  <!-- Tab: Technik-Rider -->
+  <div class="tab-content" id="tab-rider">
+    <div id="riderForm" style="max-height:700px;overflow-y:auto;padding:4px;">
+
+      <div style="text-align:center;padding:20px;background:linear-gradient(135deg,#eafaf0,#f0f7ff);border-radius:14px;margin-bottom:18px;border:1.5px solid var(--border);">
+        <div style="font-size:2em;margin-bottom:4px;">&#127908;</div>
+        <h3 style="margin:0 0 4px;font-size:1.15em;color:var(--accent);text-transform:none;letter-spacing:0;">Technik-Info-Fragebogen</h3>
+        <div style="font-size:0.88em;color:var(--text-dim);" id="riderEventInfo">Veranstaltung &bull; Datum &bull; Campingplatz Machern</div>
+        <div style="font-size:0.82em;color:var(--text-dim);margin-top:4px;">Tontechnik: Munkenfred Records (Daniel Siegl)</div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">1. Allgemeines</div>
+        <div class="rider-row"><label>Band / Act</label><input type="text" id="r_band" placeholder="Bandname" class="rider-input"></div>
+        <div class="rider-row"><label>Ansprechpartner</label><input type="text" id="r_contact" placeholder="Name" class="rider-input"></div>
+        <div class="rider-row"><label>Telefon</label><input type="text" id="r_phone" placeholder="+49..." class="rider-input" style="width:180px;"></div>
+        <div class="rider-row"><label>E-Mail</label><input type="text" id="r_email2" placeholder="band@mail.de" class="rider-input"></div>
+        <div class="rider-row"><label>Genre</label><input type="text" id="r_genre" placeholder="z.B. Rock, Pop, Jazz..." class="rider-input"></div>
+        <div class="rider-row"><label>Personen auf B&uuml;hne</label><input type="number" id="r_persons" value="4" min="1" max="20" class="rider-input" style="width:70px;"></div>
+        <div class="rider-row"><label>Auftritts-Dauer</label><input type="number" id="r_duration" value="45" min="5" max="300" class="rider-input" style="width:70px;"><span class="rider-unit">Min.</span></div>
+        <div class="rider-row"><label>Changeover (Umbau)</label><input type="number" id="r_changeover" value="15" min="5" max="60" class="rider-input" style="width:70px;"><span class="rider-unit">Min.</span></div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">2. B&uuml;hnen-Setup</div>
+        <p style="font-size:0.88em;color:var(--text-dim);margin-bottom:12px;">Was steht bei euch auf der B&uuml;hne? Einfach anhaken:</p>
+        <div class="rider-check-grid">
+          <label class="rider-chip"><input type="checkbox" id="r_voc1" checked><span>Lead Vocals</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_voc2"><span>Backing Vocals</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_egit" checked><span>E-Gitarre</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_agit"><span>Akustikgitarre</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_bass" checked><span>Bass</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_keys"><span>Keyboard / Synth</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_drums" checked><span>Schlagzeug</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_perc"><span>Percussion</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_brass"><span>Bl&auml;ser</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_violin"><span>Streicher</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_dj"><span>DJ / Turntable</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_other_inst"><span>Sonstiges</span></label>
+        </div>
+        <div class="rider-row" style="margin-top:8px;"><label>Sonstiges (Details)</label><input type="text" id="r_other_detail" placeholder="z.B. Saxophon, Fl&ouml;te, Sampler..." class="rider-input"></div>
+        <div class="rider-row"><label>Keyboard stereo?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_keys_stereo" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_keys_stereo" value="nein" checked><span>Nein</span></label></div></div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">3. Backline</div>
+        <div class="rider-row"><label>Eigene Amps dabei?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_amps" value="ja" checked><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_amps" value="nein"><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Eigenes Schlagzeug?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_own_drums" value="ja" checked><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_own_drums" value="nein"><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Trigger / E-Drums?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_trigger" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_trigger" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Was m&uuml;sste gestellt werden?</label><input type="text" id="r_backline_need" placeholder="z.B. Gitarren-Amp, Drum-Kit..." class="rider-input"></div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">4. Playback &amp; Zuspielung</div>
+        <div class="rider-row"><label>Backing Tracks?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_playback" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_playback" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Click-Track?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_click" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_click" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Click + Playback getrennt?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_split" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_split" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Ausgabe &uuml;ber</label>
+          <select id="r_playback_src" class="rider-input" style="width:auto;min-width:160px;">
+            <option value="">-- nicht ben&ouml;tigt --</option>
+            <option value="laptop">Laptop (Klinke/USB)</option>
+            <option value="tablet">Tablet / Handy</option>
+            <option value="sonstiges">Sonstiges</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">5. Monitoring</div>
+        <div class="rider-row"><label>Monitorwege (Wedges)</label><input type="number" id="r_monitors" value="2" min="0" max="10" class="rider-input" style="width:70px;"></div>
+        <div class="rider-row"><label>In-Ear-Monitoring?</label>
+          <select id="r_inear" class="rider-input" style="width:auto;min-width:200px;">
+            <option value="nein">Nein, nur Wedges</option>
+            <option value="eigen">Ja, eigenes System</option>
+            <option value="benoetigt">Ja, wird ben&ouml;tigt</option>
+          </select>
+        </div>
+        <div class="rider-row"><label>In-Ear Marke/Frequenz</label><input type="text" id="r_inear_detail" placeholder="z.B. Sennheiser EW300, 626 MHz" class="rider-input"></div>
+        <div class="rider-row"><label>Besondere W&uuml;nsche</label><input type="text" id="r_mon_wish" placeholder="z.B. Mehr Vocals im Monitor..." class="rider-input"></div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">6. Funk &amp; Wireless</div>
+        <div class="rider-row"><label>Eigene Funkmikros?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_wireless_mic" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_wireless_mic" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Funksender (Gitarre)?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_wireless_inst" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_wireless_inst" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Marke / Frequenz</label><input type="text" id="r_wireless_detail" placeholder="z.B. Shure GLXD, 2.4 GHz" class="rider-input"></div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">7. Licht &amp; Show</div>
+        <div class="rider-row"><label>Lichtstimmung</label><input type="text" id="r_light_mood" placeholder="z.B. warm, dramatisch, bunt..." class="rider-input"></div>
+        <div class="rider-row"><label>Eigenes Licht dabei?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_own_light" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_own_light" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Nebel / Haze?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_haze" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_haze" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Stroboskop?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_strobo" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_strobo" value="nein" checked><span>Nein</span></label></div></div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">8. Aufzeichnung &amp; Medien</div>
+        <p style="font-size:0.85em;color:var(--text-dim);margin-bottom:10px;">Einverst&auml;ndnis mit:</p>
+        <div class="rider-check-grid" style="grid-template-columns:repeat(2,1fr);">
+          <label class="rider-chip"><input type="checkbox" id="r_rec_stereo" checked><span>Stereo-Mixdown</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_rec_multi"><span>Multitrack-Recording</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_rec_stream" checked><span>Livestream</span></label>
+          <label class="rider-chip"><input type="checkbox" id="r_rec_photo" checked><span>Foto / Video</span></label>
+        </div>
+        <div class="rider-row" style="margin-top:8px;"><label>Social Media</label><input type="text" id="r_social" placeholder="@bandname" class="rider-input"></div>
+      </div>
+
+      <div class="rider-section">
+        <div class="rider-head">9. Zeiten &amp; Sonstiges</div>
+        <div class="rider-row"><label>Aufbauzeit</label><input type="number" id="r_setup_time" value="20" min="5" max="120" class="rider-input" style="width:70px;"><span class="rider-unit">Min.</span></div>
+        <div class="rider-row"><label>Soundcheck-Zeit</label><input type="number" id="r_soundcheck" value="15" min="5" max="60" class="rider-input" style="width:70px;"><span class="rider-unit">Min.</span></div>
+        <div class="rider-row"><label>Merch-Tisch?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_merch" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_merch" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Stageplan vorhanden?</label><div class="rider-yn"><label class="rider-radio"><input type="radio" name="r_stageplan" value="ja"><span>Ja</span></label><label class="rider-radio"><input type="radio" name="r_stageplan" value="nein" checked><span>Nein</span></label></div></div>
+        <div class="rider-row"><label>Steckdosen auf B&uuml;hne</label><input type="number" id="r_power" value="2" min="0" max="10" class="rider-input" style="width:70px;"></div>
+        <div class="rider-row"><label>Allergien / Strobophobie</label><input type="text" id="r_health" placeholder="Falls relevant..." class="rider-input"></div>
+        <div class="rider-row"><label>Sonstige Hinweise</label><input type="text" id="r_notes" placeholder="Alles was wir wissen sollten..." class="rider-input"></div>
+      </div>
+
+      <div style="text-align:center;padding:18px;background:var(--accent-bg);border-radius:12px;margin-top:4px;border:1.5px solid rgba(46,139,87,0.2);">
+        <div style="font-size:0.95em;font-weight:600;color:var(--accent);">Bitte zur&uuml;cksenden bis <span id="riderDeadline">[14 Tage vor Event]</span></div>
+        <div style="font-size:0.88em;color:var(--text-dim);margin-top:4px;">info@munkenfredrecords.de &bull; Tel: 015227024778</div>
+      </div>
+
+    </div>
+
+    <div class="send-area" style="margin-top:16px;background:var(--card-alt);border:1.5px solid var(--border);border-radius:12px;padding:20px;">
+      <h3 style="margin:0 0 14px;font-size:1em;color:var(--accent);text-transform:none;letter-spacing:0;">Rider versenden</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:0.92em;color:var(--text-dim);white-space:nowrap;font-weight:500;">Band-E-Mail:</label>
+        <input type="email" id="riderEmail" placeholder="band@beispiel.de" maxlength="120" style="flex:1;min-width:220px;background:var(--card-alt);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:0.95em;outline:none;">
+        <button onclick="sendRiderTo()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:10px 20px;font-size:0.95em;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-weight:500;">Rider per E-Mail</button>
+        <button onclick="copyRider()" id="copyRiderBtn" style="background:white;color:var(--text-dim);border:1.5px solid var(--border);border-radius:10px;padding:10px 20px;font-size:0.95em;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-weight:500;">Text kopieren</button>
+      </div>
+      <p style="font-size:0.85em;color:var(--text-dim);margin-top:10px;">Generiert einen sauberen Text-Fragebogen aus dem Formular und sendet ihn per E-Mail.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+"use strict";
+
+/* ── Konstanten ── */
+const PKT = { S: 350, M: 500, L: 650, XL: 850 };
+const PKT_NAME = { S: 'Akustik/Vocal', M: 'Band komplett', L: 'Band + Licht', XL: 'Festival/Tagesevent' };
+const PKT_INHALT = {
+  S: 'PA-Anlage, Digitalmischpult (8 Kanäle FOH), Techniker (FOH)',
+  M: 'PA-Anlage + Subwoofer, Digitalmischpult (24 Kanäle FOH), 10 Kanäle Monitoring, Schlagzeug-Abnahme komplett, Techniker (FOH)',
+  L: 'PA-Anlage + Subwoofer, Digitalmischpult (24 Kanäle FOH), 10 Kanäle Monitoring, Schlagzeug-Abnahme komplett, Lichttechnik (Bühne + Atmosphäre), DMX-Steuerung, Techniker (FOH + Licht)',
+  XL: 'PA-Anlage + Subwoofer, Digitalmischpult (24 Kanäle FOH), 10 Kanäle Monitoring, Schlagzeug-Abnahme komplett, Lichttechnik, DMX-Steuerung, Techniker \u2013 ausgelegt für ganztägige Events mit mehreren Acts (bis 10h+)'
+};
+const DAY_TYPES = {
+  'aufbau':       { label: 'Aufbautag',           pct: 40,  color: '#3cb371', desc: 'Anlieferung, Aufbau, Verkabelung, Linecheck', inclBands: 0 },
+  'event':        { label: 'Eventtag',             pct: 100, color: '#f39c12', desc: 'Soundcheck + Live-Mixing (bis 6h)', inclBands: 2 },
+  'aufbau_event': { label: 'Aufbau + Event',       pct: 120, color: '#3498db', desc: 'Aufbau morgens + Event abends', inclBands: 1 },
+  'event_abbau':  { label: 'Event + Abbau',        pct: 120, color: '#e67e22', desc: 'Event + Abbau im Anschluss', inclBands: 1 },
+  'abbau':        { label: 'Abbautag',             pct: 30,  color: '#e74c3c', desc: 'Abbau, Verladung, Abtransport', inclBands: 0 },
+  'standby':      { label: 'Standby/Ruhetag',      pct: 20,  color: '#9b59b6', desc: 'Technik steht, kein Betrieb', inclBands: 0 },
+  'event_lang':   { label: 'Eventtag lang (10h+)', pct: 140, color: '#e74c3c', desc: '\u00dcberlanger Eventtag (10h+)', inclBands: 2 }
+};
+const EVENT_TYPES = ['event', 'aufbau_event', 'event_abbau', 'event_lang'];
+
+/* ── Card Collapse ── */
+function toggleCard(h2) {
+  var body = h2.nextElementSibling;
+  if (!body || !body.classList.contains('card-body')) return;
+  body.classList.add('anim');
+  var isCollapsed = body.classList.contains('collapsed');
+  if (isCollapsed) {
+    body.classList.remove('collapsed');
+    body.style.maxHeight = body.scrollHeight + 'px';
+    h2.classList.remove('collapsed');
+    setTimeout(function() { body.style.maxHeight = ''; body.classList.remove('anim'); }, 350);
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    body.offsetHeight; // force reflow
+    body.classList.add('collapsed');
+    h2.classList.add('collapsed');
+  }
+}
+
+function toggleDayInfo(btn) {
+  var grid = btn.nextElementSibling;
+  if (!grid) return;
+  var vis = grid.style.display !== 'none';
+  grid.style.display = vis ? 'none' : 'grid';
+  btn.innerHTML = vis ? '&#9432; Tagestypen anzeigen' : '&#9432; Tagestypen ausblenden';
+}
+
+/* ── Hilfsfunktionen ── */
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, isNaN(v) ? min : v));
+}
+
+function getVal(id) { return document.getElementById(id).value; }
+function getNum(id) { return +document.getElementById(id).value; }
+function getChk(id) { return document.getElementById(id).checked; }
+
+function isValidEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+/* ── Band-Aufschlag nach Paket ── */
+function calcBandCost(acts, dayInclBands) {
+  if (dayInclBands === 0) return { extra: 0, cost: 0, maxBands: 0, incl: 0 };
+  if (sel === 'XL') return { extra: 0, cost: 0, maxBands: 99, incl: acts };
+  if (sel === 'S') {
+    var sIncl = 3;
+    var sExtra = Math.max(0, acts - sIncl);
+    return { extra: sExtra, cost: sExtra * 50, maxBands: 7, incl: sIncl };
+  }
+  // M & L: immer 2 inkl., degressive Staffelung
+  var mlIncl = 2;
+  var rates = [100, 70, 50];
+  var mlExtra = Math.max(0, acts - mlIncl);
+  var mlCost = 0;
+  for (var i = 0; i < mlExtra && i < rates.length; i++) mlCost += rates[i];
+  return { extra: mlExtra, cost: mlCost, maxBands: 5, incl: mlIncl };
+}
+
+/* ── State ── */
+var sel = 'M';
+var days = [{ type: 'aufbau_event', acts: 2 }];
+
+/* ── Paket-Auswahl ── */
+function selPaket(p) {
+  if (!PKT[p]) return;
+  sel = p;
+  document.querySelectorAll('.paket-option').forEach(function(el) {
+    el.classList.toggle('selected', el.dataset.p === p);
+  });
+  var badge = document.getElementById('paketBadge');
+  if (badge) badge.textContent = p + ' \u2013 ' + PKT[p] + ' \u20ac';
+  renderDays();
+  calc();
+}
+
+/* ── Tagesplaner rendern ── */
+function renderDays() {
+  var el = document.getElementById('dayPlanner');
+  var html = '';
+  for (var i = 0; i < days.length; i++) {
+    var d = days[i];
+    var dt = DAY_TYPES[d.type];
+    var base = PKT[sel];
+    var baseCost = Math.round(base * dt.pct / 100);
+    var bRules = calcBandCost(d.acts || 1, dt.inclBands);
+    var maxB = bRules.maxBands > 0 ? bRules.maxBands : 20;
+    var acts = clamp(d.acts || 1, 1, maxB);
+    bRules = calcBandCost(acts, dt.inclBands);
+    var extraBands = bRules.extra;
+    var bandExtra = bRules.cost;
+    var cost = baseCost + bandExtra;
+
+    var opts = '';
+    for (var k in DAY_TYPES) {
+      var v = DAY_TYPES[k];
+      opts += '<option value="' + k + '"' + (k === d.type ? ' selected' : '') + '>' + esc(v.label) + ' (' + v.pct + '%)</option>';
+    }
+
+    var showActs = EVENT_TYPES.indexOf(d.type) >= 0;
+    var bandHint = '';
+    if (showActs) {
+      var hintColor = extraBands > 0 ? 'var(--warning)' : 'var(--text-dim)';
+      var hintText = '';
+      if (sel === 'XL') {
+        hintText = 'alle inkl. (Festival)';
+        hintColor = 'var(--text-dim)';
+      } else if (sel === 'S') {
+        hintText = bRules.incl + ' inkl.';
+        if (extraBands > 0) hintText += ', +' + extraBands + '\u00d7 50 \u20ac';
+      } else {
+        hintText = bRules.incl + ' inkl.';
+        if (extraBands > 0) {
+          var rateList = [100, 70, 50];
+          var parts = [];
+          for (var r = 0; r < extraBands && r < rateList.length; r++) parts.push('+' + rateList[r] + ' \u20ac');
+          hintText += ', ' + parts.join(', ');
+        }
+      }
+      if (sel !== 'XL' && acts >= maxB) hintText += ' (Max!)';
+      bandHint = '<span style="font-size:0.72em;color:' + hintColor + '">' + hintText + '</span>';
+    }
+
+    html += '<div class="day-row">';
+    html += '<span class="day-num">Tag ' + (i + 1) + '</span>';
+    html += '<select onchange="days[' + i + '].type=this.value;renderDays();calc()">' + opts + '</select>';
+    if (showActs) {
+      html += '<label style="font-size:0.8em;margin-left:4px;">Bands: <input type="number" value="' + acts + '" min="1" max="' + maxB + '" style="width:50px" onchange="days[' + i + '].acts=Math.max(1,Math.min(' + maxB + ',+this.value));renderDays();calc()"> ' + bandHint + '</label>';
+    }
+    html += '<span class="day-info">' + esc(dt.desc) + '</span>';
+    html += '<span class="day-price">' + cost + ' EUR</span>';
+    if (days.length > 1) {
+      html += '<button class="remove-day" onclick="days.splice(' + i + ',1);renderDays();calc()">\u2715</button>';
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+  var db = document.getElementById('daysBadge');
+  if (db) db.textContent = days.length + ' Tag' + (days.length > 1 ? 'e' : '');
+  syncEndDate();
+}
+
+/* ── Tag hinzufügen ── */
+function addDay() {
+  if (days.length >= 30) return;
+  days.push({ type: 'event', acts: 1 });
+  renderDays();
+  calc();
+}
+
+/* ── Hauptberechnung ── */
+function calc() {
+  var base = PKT[sel];
+
+  // Tageskosten
+  var daysCost = 0;
+  var eventDays = 0;
+  var totalBandExtra = 0;
+  var dayDetails = [];
+
+  for (var i = 0; i < days.length; i++) {
+    var d = days[i];
+    var dt = DAY_TYPES[d.type];
+    var baseCost = Math.round(base * dt.pct / 100);
+    var bRules = calcBandCost(d.acts || 1, dt.inclBands);
+    var maxB = bRules.maxBands > 0 ? bRules.maxBands : 20;
+    var acts = clamp(d.acts || 1, 1, maxB);
+    bRules = calcBandCost(acts, dt.inclBands);
+    var extraBands = bRules.extra;
+    var bandExtra = bRules.cost;
+    var cost = baseCost + bandExtra;
+    totalBandExtra += bandExtra;
+    daysCost += cost;
+    dayDetails.push({ day: i + 1, type: d.type, label: dt.label, cost: cost, baseCost: baseCost, acts: acts, extraBands: extraBands, bandExtra: bandExtra });
+    if (EVENT_TYPES.indexOf(d.type) >= 0) eventDays++;
+  }
+
+  // Mehrtages-Rabatt
+  var mehrtageEligible = eventDays >= 3;
+  document.getElementById('mehrtage').checked = mehrtageEligible;
+  var mehrtageRabatt = 0;
+  if (mehrtageEligible) {
+    var eventCostSum = 0;
+    for (var j = 0; j < dayDetails.length; j++) {
+      if (EVENT_TYPES.indexOf(dayDetails[j].type) >= 0) eventCostSum += dayDetails[j].cost;
+    }
+    mehrtageRabatt = Math.round(eventCostSum * 0.10);
+  }
+
+  // Rabatte
+  var campingRabatt = getChk('campingRabatt');
+  var helfer = clamp(getNum('helfer'), 0, 10);
+  var helferRab = helfer * 250;
+  var wiederhol = getChk('wiederhol');
+
+  var subtotal = daysCost;
+  var rows = [];
+
+  // Tagesaufschlüsselung
+  for (var k = 0; k < dayDetails.length; k++) {
+    var dd = dayDetails[k];
+    var isEvent = EVENT_TYPES.indexOf(dd.type) >= 0;
+    var bandInfo = '';
+    if (isEvent) {
+      bandInfo = ' (' + dd.acts + ' Band' + (dd.acts > 1 ? 's' : '');
+      if (dd.bandExtra > 0) bandInfo += ', +' + dd.bandExtra + ' EUR';
+      bandInfo += ')';
+    }
+    rows.push({ label: 'Tag ' + dd.day + ': ' + dd.label + bandInfo, value: dd.cost, type: 'base' });
+  }
+
+  // Campingplatz-Rabatt (30%)
+  if (campingRabatt) {
+    var cRab = Math.round(subtotal * 0.30);
+    subtotal -= cRab;
+    rows.push({ label: 'Campingplatz-Rabatt (30%)', value: -cRab, type: 'disc' });
+  }
+
+  if (helferRab > 0) { subtotal -= helferRab; rows.push({ label: 'Aufbauhelfer (' + helfer + '\u00d7 250 EUR)', value: -helferRab, type: 'disc' }); }
+  if (mehrtageRabatt > 0) { subtotal -= mehrtageRabatt; rows.push({ label: 'Mehrtages-Rabatt (10% auf Eventtage)', value: -mehrtageRabatt, type: 'disc' }); }
+
+  if (wiederhol) {
+    var wRab = Math.round(subtotal * 0.05);
+    subtotal -= wRab;
+    rows.push({ label: 'Wiederholungsbuchung (5%)', value: -wRab, type: 'disc' });
+  }
+
+  // Extras
+  var aufz = getChk('aufzeichnung');
+  var live = getChk('livestream');
+  var bewachungTyp = getVal('bewachungTyp');
+  var bewachung = clamp(getNum('bewachung'), 0, 10);
+  var bewachungRate = bewachungTyp === 'platz' ? 100 : bewachungTyp === 'munkenfred' ? 150 : 0;
+  var kurzf = getChk('kurzfristig');
+  var anfahrt = clamp(getNum('anfahrt'), 0, 200);
+
+  // Bewachung Preis-Anzeige aktualisieren
+  var bpEl = document.getElementById('bewachungPreis');
+  if (bewachungTyp === 'veranstalter') { bpEl.textContent = 'N\u00e4chte (0 \u20ac)'; }
+  else { bpEl.textContent = '\u00d7 ' + bewachungRate + ' \u20ac/Nacht'; }
+
+  if (aufz) { var v1 = eventDays * 50; subtotal += v1; rows.push({ label: 'Aufzeichnung (' + eventDays + '\u00d7 50 EUR)', value: v1, type: 'add' }); }
+  if (live) { var v2 = eventDays * 75; subtotal += v2; rows.push({ label: 'Livestream-Signal (' + eventDays + '\u00d7 75 EUR)', value: v2, type: 'add' }); }
+  if (bewachung > 0 && bewachungRate > 0) { var v3 = bewachung * bewachungRate; subtotal += v3; rows.push({ label: 'Nacht-Bewachung (' + bewachung + '\u00d7 ' + bewachungRate + ' EUR)', value: v3, type: 'add' }); }
+  if (kurzf) { subtotal += 200; rows.push({ label: 'Kurzfristigkeits-Zuschlag', value: 200, type: 'add' }); }
+  if (anfahrt > 0) { var v4 = Math.round(anfahrt * 0.35 * 2); subtotal += v4; rows.push({ label: 'Anfahrt (' + anfahrt + ' km \u00d7 0,35 EUR \u00d7 2)', value: v4, type: 'add' }); }
+
+  var angebotNetto = Math.max(subtotal, 0);
+  var isBrutto = getVal('preisTyp') === 'brutto';
+  var mwst = isBrutto ? Math.round(angebotNetto * 0.19) : 0;
+  var angebot = angebotNetto + mwst;
+
+  // Display
+  document.getElementById('rPrice').textContent = angebot + ' EUR';
+  document.getElementById('rDays').textContent = days.length + (days.length === 1 ? ' Tag' : ' Tage');
+
+  // Breakdown
+  var bHTML = '';
+  for (var m = 0; m < rows.length; m++) {
+    var r = rows[m];
+    var cls = r.type === 'disc' ? 'disc' : r.type === 'add' ? 'add' : '';
+    var pre = r.value > 0 && r.type !== 'base' ? '+' : '';
+    bHTML += '<div class="br-row"><span class="lbl">' + esc(r.label) + '</span><span class="val ' + cls + '">' + pre + r.value + ' EUR</span></div>';
+  }
+  if (!isBrutto) {
+    bHTML += '<div class="br-row total"><span class="lbl">Angebotspreis (netto)</span><span class="val" style="color:var(--accent-light)">' + angebot + ' EUR</span></div>';
+    bHTML += '<div class="br-row" style="border:none;font-size:0.78em;"><span class="lbl" style="color:var(--text-dim);">Gem. §19 UStG wird keine MwSt ausgewiesen</span></div>';
+  } else {
+    bHTML += '<div class="br-row sub"><span class="lbl">Nettobetrag</span><span class="val">' + angebotNetto + ' EUR</span></div>';
+    bHTML += '<div class="br-row"><span class="lbl">zzgl. 19% MwSt</span><span class="val add">+' + mwst + ' EUR</span></div>';
+    bHTML += '<div class="br-row total"><span class="lbl">Angebotspreis (brutto)</span><span class="val" style="color:var(--accent-light)">' + angebot + ' EUR</span></div>';
+  }
+  if (eventDays > 0) {
+    bHTML += '<div class="br-row" style="border:none;padding-top:8px;"><span class="lbl" style="font-size:0.78em;">Preis pro Eventtag (Durchschnitt)</span><span class="val" style="font-size:0.85em;">' + Math.round(angebot / eventDays) + ' EUR</span></div>';
+  }
+  document.getElementById('breakdownContent').innerHTML = bHTML;
+
+  // Timeline
+  var tHTML = '<h3 style="margin:0 0 10px;color:var(--text);font-size:0.88em;">Zeitplan</h3>';
+  var startDate = getVal('eventDate') ? new Date(getVal('eventDate')) : null;
+  for (var n = 0; n < dayDetails.length; n++) {
+    var dItem = dayDetails[n];
+    var dtObj = DAY_TYPES[dItem.type];
+    var dateStr = '';
+    if (startDate) {
+      var tmpD = new Date(startDate);
+      tmpD.setDate(tmpD.getDate() + n);
+      dateStr = tmpD.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    }
+    var isEv = EVENT_TYPES.indexOf(dItem.type) >= 0;
+    var bandTxt = isEv ? ', ' + dItem.acts + ' Band' + (dItem.acts > 1 ? 's' : '') + (dItem.bandExtra > 0 ? ' (+' + dItem.bandExtra + ' \u20ac)' : '') : '';
+    tHTML += '<div class="br-row" style="padding:6px 0;">';
+    tHTML += '<span><strong style="color:' + dtObj.color + '">Tag ' + dItem.day + '</strong> ' + (dateStr ? '(' + esc(dateStr) + ')' : '') + ' \u2013 ' + esc(dtObj.label) + esc(bandTxt) + '</span>';
+    tHTML += '<span class="val" style="color:' + dtObj.color + '">' + dItem.cost + ' EUR</span>';
+    tHTML += '</div>';
+  }
+  document.getElementById('timelineContent').innerHTML = tHTML;
+
+  // Angebotstext
+  genAngebot(angebotNetto, mwst, angebot, isBrutto, dayDetails, eventDays, totalBandExtra);
+
+  // Technik-Rider
+  genRider();
+}
+
+/* ── Angebotstext generieren ── */
+function genAngebot(angebotNetto, mwst, angebot, isBrutto, dayDetails, eventDays, totalBandExtra) {
+  var name = getVal('eventName') || '[Veranstaltungsname]';
+  var veranstalter = getVal('veranstalter') || '[Veranstalter]';
+  var besucher = clamp(getNum('besucher'), 10, 2000);
+  var startDate = getVal('eventDate');
+  var helfer = clamp(getNum('helfer'), 0, 10);
+  var campingRab = getChk('campingRabatt');
+  var aufz = getChk('aufzeichnung');
+  var live = getChk('livestream');
+  var bewachungTyp = getVal('bewachungTyp');
+  var bewachung = clamp(getNum('bewachung'), 0, 10);
+  var bewachungRate = bewachungTyp === 'platz' ? 100 : bewachungTyp === 'munkenfred' ? 150 : 0;
+  var wiederhol = getChk('wiederhol');
+  var kurzf = getChk('kurzfristig');
+  var anfahrt = clamp(getNum('anfahrt'), 0, 200);
+  var gema = getChk('gemaHinweis');
+  var laerm = getChk('laermHinweis');
+  var strom = getChk('stromHinweis');
+  var wetter = getChk('wetterHinweis');
+  var mehrtageEligible = eventDays >= 3;
+
+  var endDate = getVal('eventEndDate');
+  var dateStr = startDate ? new Date(startDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '[Datum]';
+  if (days.length > 1) {
+    var endStr = '';
+    if (endDate) {
+      endStr = new Date(endDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } else if (startDate) {
+      var end = new Date(startDate);
+      end.setDate(end.getDate() + days.length - 1);
+      endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    if (endStr) dateStr += ' \u2013 ' + endStr;
+  }
+
+  var zeitplan = '';
+  for (var i = 0; i < dayDetails.length; i++) {
+    var d = dayDetails[i];
+    var dt = DAY_TYPES[d.type];
+    var dd = '';
+    if (startDate) {
+      var dt2 = new Date(startDate);
+      dt2.setDate(dt2.getDate() + i);
+      dd = dt2.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit' }) + ': ';
+    }
+    var isEv = EVENT_TYPES.indexOf(d.type) >= 0;
+    var actInfo = isEv ? ' (' + d.acts + ' Band' + (d.acts > 1 ? 's' : '') + (d.bandExtra > 0 ? ', +' + d.bandExtra + ' EUR Aufschlag' : '') + ')' : '';
+    zeitplan += '  Tag ' + d.day + ' \u2013 ' + dd + dt.label + actInfo + '\n         ' + dt.desc + '\n';
+  }
+
+  var extras = [];
+  if (aufz) extras.push('Konzert-Aufzeichnung (Stereo-Mixdown, pro Eventtag)');
+  if (live) extras.push('Livestream-Signalausgabe');
+  if (bewachung > 0 && bewachungTyp === 'veranstalter') extras.push('Nacht-Bewachung Technik (' + bewachung + ' N\u00e4chte, vom Veranstalter organisiert)');
+  if (bewachung > 0 && bewachungTyp === 'platz') extras.push('Nacht-Bewachung Technik (' + bewachung + ' N\u00e4chte, durch Campingplatz Machern, ' + (bewachung * 100) + ' EUR)');
+  if (bewachung > 0 && bewachungTyp === 'munkenfred') extras.push('Nacht-Bewachung Technik (' + bewachung + ' N\u00e4chte, durch Munkenfred Records, ' + (bewachung * 150) + ' EUR)');
+
+  var hinweise = [];
+  if (gema) hinweise.push('GEMA: Die Anmeldung und Bezahlung der GEMA-Geb\u00fchren obliegt dem Veranstalter.');
+  if (laerm) hinweise.push('L\u00e4rmschutz: Nachtruhe ab 22:00 Uhr. Maximale Lautst\u00e4rke wird mit dem Veranstalter abgestimmt.');
+  if (strom) hinweise.push('Strom: Der Veranstalter stellt mindestens 2\u00d7 16A/230V (CEE oder Schuko) bereit.');
+  if (wetter) hinweise.push('Wetter: Bei extremen Wetterbedingungen (Gewitter, Sturm) kann die Veranstaltung aus Sicherheitsgr\u00fcnden unterbrochen oder abgesagt werden. Bereits erbrachte Leistungen (Aufbau, Soundcheck) werden berechnet.');
+  hinweise.push('B\u00fchne/\u00dcberdachung: Wird vom Veranstalter gestellt und muss vor Aufbaubeginn fertig sein.');
+  hinweise.push('Zufahrt: Fahrzeugzufahrt bis zur B\u00fchne muss f\u00fcr Materialanlieferung gew\u00e4hrleistet sein.');
+
+  var preisBlock = '';
+  if (isBrutto) {
+    preisBlock = '  Nettobetrag:   ' + angebotNetto + ' EUR\n  zzgl. 19% MwSt: ' + mwst + ' EUR\n  Gesamtpreis (brutto): ' + angebot + ' EUR';
+  } else {
+    preisBlock = '  Gesamtpreis:  ' + angebot + ' EUR\n  Gem. \u00a7 19 UStG wird keine Umsatzsteuer ausgewiesen.';
+  }
+  if (eventDays > 1) {
+    preisBlock += '\n  (entspricht ca. ' + Math.round(angebot / eventDays) + ' EUR pro Eventtag)';
+  }
+
+  var leistungExtra = '';
+  if (totalBandExtra > 0) leistungExtra += '\n  Band-Aufschlag gesamt: +' + totalBandExtra + ' EUR\n';
+  if (helfer > 0) leistungExtra += '\n  Auf-/Abbau: ' + helfer + ' Helfer werden vom Veranstalter gestellt (\u2212' + (helfer * 250) + ' EUR).\n';
+  if (campingRab) leistungExtra += '\n  Campingplatz-Sonderkonditionen: 30% Rabatt auf den Basispreis.\n';
+  if (mehrtageEligible) leistungExtra += '\n  Mehrtages-Rabatt: 10% auf alle Eventtage (ab 3+ Eventtagen).\n';
+  if (wiederhol) leistungExtra += '\n  Wiederholungsbuchung: 5% Rabatt auf den Gesamtpreis.\n';
+  if (kurzf) leistungExtra += '\n  Kurzfristigkeits-Zuschlag: +200 EUR (weniger als 7 Tage Vorlauf).\n';
+  if (anfahrt > 0) {
+    var anfahrtKosten = Math.round(anfahrt * 0.35 * 2);
+    leistungExtra += '\n  Anfahrt: ' + anfahrt + ' km \u00d7 0,35 EUR \u00d7 2 (Hin + R\u00fcck) = +' + anfahrtKosten + ' EUR\n';
+  }
+  if (extras.length > 0) leistungExtra += '\n  Zus\u00e4tzlich:\n  ' + extras.join('\n  ') + '\n';
+
+  var t = 'ANGEBOT \u2013 VERANSTALTUNGSTECHNIK\n\n'
+    + 'An: ' + veranstalter + '\nVon: Munkenfred Records (Daniel Siegl)\n\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'VERANSTALTUNG\n'
+    + '  Name:     ' + name + '\n'
+    + '  Datum:    ' + dateStr + '\n'
+    + '  Dauer:    ' + days.length + ' Tag' + (days.length > 1 ? 'e' : '') + '\n'
+    + '  Location: Campingplatz Machern\n'
+    + '  Besucher: ca. ' + besucher + ' (erwartet)\n\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'ZEITPLAN\n' + zeitplan
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'LEISTUNGSUMFANG\n'
+    + '  Technik-Paket ' + sel + ' \u2013 ' + PKT_NAME[sel] + '\n\n'
+    + '  Enthalten:\n'
+    + '  ' + PKT_INHALT[sel] + '\n\n'
+    + '  Bands pro Tag:\n'
+    + (sel === 'XL'
+      ? '  - Unbegrenzte Bands inklusive (Festival-Tarif)\n'
+      : sel === 'S'
+        ? '  - 3 Bands inklusive pro Eventtag\n'
+          + '  - Jede weitere Band: +50 EUR (Soundcheck + Mixing)\n'
+          + '  - Max. 7 Bands pro Tag (dar\u00fcber Sonderverhandlung)\n'
+        : '  - 2 Bands inklusive pro Eventtag\n'
+          + '  - 3. Band: +100 EUR, 4. Band: +70 EUR, 5. Band: +50 EUR\n'
+          + '  - Max. 5 Bands pro Tag (dar\u00fcber Sonderverhandlung)\n'
+    )
+    + leistungExtra
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'PREIS\n' + preisBlock + '\n\n'
+    + '  Zahlungsbedingungen:\n'
+    + '  - 30% Anzahlung bei Auftragsbest\u00e4tigung\n'
+    + '  - 70% Restzahlung am ersten Veranstaltungstag\n'
+    + '  - Barzahlung, \u00dcberweisung oder PayPal\n\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'STORNIERUNG\n'
+    + '  > 14 Tage vorher:  Anzahlung wird erstattet\n'
+    + '  7\u201314 Tage vorher:  50% des Gesamtbetrags\n'
+    + '  < 7 Tage vorher:   80% des Gesamtbetrags\n'
+    + '  Abbruch wegen Wetter: Bereits erbrachte Leistungen\n'
+    + '                         werden anteilig berechnet.\n\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'HINWEISE\n'
+    + hinweise.map(function(h) { return '  \u2022 ' + h; }).join('\n') + '\n\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'WICHTIG: PLANUNGSANGEBOT\n'
+    + '  Dieses Angebot dient der Vorplanung und Kalkulation.\n'
+    + '  Der genaue Termin und die Details werden noch pers\u00f6nlich\n'
+    + '  mit Daniel Siegl (Munkenfred Records) abgestimmt.\n'
+    + '  Erst nach Best\u00e4tigung durch beide Seiten ist die Buchung verbindlich.\n\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'VERANSTALTUNG BEST\u00c4TIGEN ODER ABSAGEN\n\n'
+    + '  Veranstaltung best\u00e4tigen:\n'
+    + '  mailto:emailadresse15@yahoo.de?subject=BEST\u00c4TIGUNG:%20' + encodeURIComponent(name) + '\n\n'
+    + '  Veranstaltung absagen:\n'
+    + '  mailto:emailadresse15@yahoo.de?subject=ABSAGE:%20' + encodeURIComponent(name) + '\n\n'
+    + '  (Link anklicken oder E-Mail senden an: emailadresse15@yahoo.de)\n\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'Dieses Angebot ist 4 Wochen g\u00fcltig.\n\n'
+    + 'Munkenfred Records\n'
+    + 'Daniel Siegl\n'
+    + 'Tel.: 015227024778\n'
+    + 'info@munkenfredrecords.de';
+
+  document.getElementById('angebotInner').textContent = t;
+}
+
+/* ── Tabs ── */
+function showTab(name) {
+  var tabNames = ['breakdown', 'angebot', 'timeline', 'rider'];
+  document.querySelectorAll('.tab').forEach(function(t, i) {
+    t.classList.toggle('active', tabNames[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(function(tc) {
+    tc.classList.toggle('active', tc.id === 'tab-' + name);
+  });
+}
+
+/* ── Technik-Rider: Header & Deadline updaten ── */
+function genRider() {
+  var name = getVal('eventName') || '[Veranstaltungsname]';
+  var startDate = getVal('eventDate');
+  var dateStr = startDate ? new Date(startDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '[Datum]';
+  document.getElementById('riderEventInfo').textContent = name + ' \u2022 ' + dateStr + ' \u2022 Campingplatz Machern';
+  var deadline = '';
+  if (startDate) {
+    var dl = new Date(startDate);
+    dl.setDate(dl.getDate() - 14);
+    deadline = dl.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } else {
+    deadline = '[14 Tage vor Event]';
+  }
+  document.getElementById('riderDeadline').textContent = deadline;
+}
+
+/* ── Rider: Text aus Formular generieren ── */
+function riderToText() {
+  var name = getVal('eventName') || '[Veranstaltungsname]';
+  var startDate = getVal('eventDate');
+  var dateStr = startDate ? new Date(startDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '[Datum]';
+  var deadline = '';
+  if (startDate) { var dl = new Date(startDate); dl.setDate(dl.getDate() - 14); deadline = dl.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
+  else { deadline = '[14 Tage vor Event]'; }
+
+  function rv(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+  function rc(id) { var el = document.getElementById(id); return el ? el.checked : false; }
+  function rr(name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ''; }
+  var yn = function(v) { return v === 'ja' ? 'Ja' : 'Nein'; };
+
+  var instruments = [];
+  if (rc('r_voc1')) instruments.push('Lead Vocals');
+  if (rc('r_voc2')) instruments.push('Backing Vocals');
+  if (rc('r_egit')) instruments.push('E-Gitarre');
+  if (rc('r_agit')) instruments.push('Akustikgitarre');
+  if (rc('r_bass')) instruments.push('Bass');
+  if (rc('r_keys')) instruments.push('Keyboard/Synth');
+  if (rc('r_drums')) instruments.push('Schlagzeug');
+  if (rc('r_perc')) instruments.push('Percussion');
+  if (rc('r_brass')) instruments.push('Bl\u00e4ser');
+  if (rc('r_violin')) instruments.push('Streicher');
+  if (rc('r_dj')) instruments.push('DJ/Turntable');
+  if (rc('r_other_inst')) instruments.push('Sonstiges');
+
+  var media = [];
+  if (rc('r_rec_stereo')) media.push('Stereo-Mixdown');
+  if (rc('r_rec_multi')) media.push('Multitrack');
+  if (rc('r_rec_stream')) media.push('Livestream');
+  if (rc('r_rec_photo')) media.push('Foto/Video');
+
+  var inearMap = { nein: 'Nein', eigen: 'Eigenes System', benoetigt: 'Ben\u00f6tigt' };
+
+  var t = '\ud83c\udfa4 TECHNIK-INFO \u2013 ' + (rv('r_band') || '[Bandname]') + '\n'
+    + 'Event: ' + name + ' (' + dateStr + ')\n'
+    + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
+    + 'KONTAKT\n'
+    + '  Band: ' + (rv('r_band') || '___') + '\n'
+    + '  Ansprechpartner: ' + (rv('r_contact') || '___') + '\n'
+    + '  Tel: ' + (rv('r_phone') || '___') + '\n'
+    + '  E-Mail: ' + (rv('r_email2') || '___') + '\n'
+    + '  Genre: ' + (rv('r_genre') || '___') + '\n'
+    + '  Personen: ' + rv('r_persons') + ' | Dauer: ' + rv('r_duration') + ' Min. | Changeover: ' + rv('r_changeover') + ' Min.\n\n'
+    + 'B\u00dcHNEN-SETUP\n'
+    + '  Instrumente: ' + (instruments.length > 0 ? instruments.join(', ') : 'keine Angabe') + '\n'
+    + '  Keyboard stereo: ' + yn(rr('r_keys_stereo')) + '\n'
+    + (rv('r_other_detail') ? '  Details: ' + rv('r_other_detail') + '\n' : '')
+    + '\n'
+    + 'BACKLINE\n'
+    + '  Eigene Amps: ' + yn(rr('r_amps')) + '\n'
+    + '  Eigenes Schlagzeug: ' + yn(rr('r_own_drums')) + '\n'
+    + '  Trigger/E-Drums: ' + yn(rr('r_trigger')) + '\n'
+    + (rv('r_backline_need') ? '  Ben\u00f6tigt: ' + rv('r_backline_need') + '\n' : '')
+    + '\n'
+    + 'PLAYBACK\n'
+    + '  Backing Tracks: ' + yn(rr('r_playback')) + '\n'
+    + '  Click-Track: ' + yn(rr('r_click')) + '\n'
+    + '  Click+Playback getrennt: ' + yn(rr('r_split')) + '\n'
+    + (rv('r_playback_src') ? '  Ausgabe: ' + rv('r_playback_src') + '\n' : '')
+    + '\n'
+    + 'MONITORING\n'
+    + '  Monitorwege: ' + rv('r_monitors') + '\n'
+    + '  In-Ear: ' + (inearMap[rv('r_inear')] || 'Nein') + '\n'
+    + (rv('r_inear_detail') ? '  IEM Detail: ' + rv('r_inear_detail') + '\n' : '')
+    + (rv('r_mon_wish') ? '  W\u00fcnsche: ' + rv('r_mon_wish') + '\n' : '')
+    + '\n'
+    + 'FUNK\n'
+    + '  Funkmikros: ' + yn(rr('r_wireless_mic')) + '\n'
+    + '  Funksender: ' + yn(rr('r_wireless_inst')) + '\n'
+    + (rv('r_wireless_detail') ? '  Detail: ' + rv('r_wireless_detail') + '\n' : '')
+    + '\n'
+    + 'LICHT\n'
+    + '  Eigenes Licht: ' + yn(rr('r_own_light')) + '\n'
+    + '  Nebel/Haze: ' + yn(rr('r_haze')) + '\n'
+    + '  Stroboskop: ' + yn(rr('r_strobo')) + '\n'
+    + (rv('r_light_mood') ? '  Stimmung: ' + rv('r_light_mood') + '\n' : '')
+    + '\n'
+    + 'AUFZEICHNUNG\n'
+    + '  Einverstanden: ' + (media.length > 0 ? media.join(', ') : 'keine') + '\n'
+    + (rv('r_social') ? '  Social Media: ' + rv('r_social') + '\n' : '')
+    + '\n'
+    + 'ZEITEN & SONSTIGES\n'
+    + '  Aufbau: ' + rv('r_setup_time') + ' Min. | Soundcheck: ' + rv('r_soundcheck') + ' Min.\n'
+    + '  Merch-Tisch: ' + yn(rr('r_merch')) + '\n'
+    + '  Stageplan: ' + yn(rr('r_stageplan')) + '\n'
+    + '  Steckdosen: ' + rv('r_power') + '\n'
+    + (rv('r_health') ? '  Gesundheit: ' + rv('r_health') + '\n' : '')
+    + (rv('r_notes') ? '  Hinweise: ' + rv('r_notes') + '\n' : '')
+    + '\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n'
+    + 'Bitte zur\u00fccksenden bis ' + deadline + ' an:\n'
+    + 'info@munkenfredrecords.de | Tel: 015227024778\n'
+    + 'Munkenfred Records \u2013 Daniel Siegl';
+  return t;
+}
+
+/* ── Rider kopieren ── */
+function copyRider() {
+  var t = riderToText();
+  navigator.clipboard.writeText(t).then(function() {
+    var b = document.getElementById('copyRiderBtn');
+    b.textContent = 'Kopiert!';
+    setTimeout(function() { b.textContent = 'Text kopieren'; }, 2000);
+  }).catch(function() {
+    alert('Kopieren fehlgeschlagen.');
+  });
+}
+
+/* ── Rider per E-Mail senden ── */
+function sendRiderTo() {
+  var email = document.getElementById('riderEmail').value.trim();
+  if (!email || !isValidEmail(email)) {
+    var inp = document.getElementById('riderEmail');
+    inp.style.borderColor = '#e74c3c';
+    inp.focus();
+    setTimeout(function() { inp.style.borderColor = ''; }, 2000);
+    return;
+  }
+  var text = riderToText();
+  var eventName = getVal('eventName') || 'Event';
+  var subject = encodeURIComponent('Technik-Fragebogen: ' + eventName + ' \u2013 Munkenfred Records');
+  var body = encodeURIComponent(text);
+  var mailtoUrl = 'mailto:' + encodeURIComponent(email) + '?subject=' + subject + '&body=' + body;
+
+  if (mailtoUrl.length > 2000) {
+    navigator.clipboard.writeText(text).then(function() {
+      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + subject, '_blank', 'noopener,noreferrer');
+      alert('Der Rider wurde in die Zwischenablage kopiert.\n\nE-Mail \u00f6ffnet sich \u2013 Text mit Strg+V einf\u00fcgen.');
+    }).catch(function() {
+      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + subject, '_blank', 'noopener,noreferrer');
+      alert('Bitte den Rider manuell kopieren und einf\u00fcgen.');
+    });
+  } else {
+    window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
+  }
+}
+
+/* ── Kopieren ── */
+function copyText() {
+  var t = document.getElementById('angebotInner').textContent;
+  navigator.clipboard.writeText(t).then(function() {
+    var b = document.getElementById('copyBtn');
+    b.textContent = 'Kopiert!';
+    b.classList.add('copied');
+    setTimeout(function() { b.textContent = 'Angebotstext kopieren'; b.classList.remove('copied'); }, 2000);
+  }).catch(function() {
+    alert('Kopieren fehlgeschlagen. Bitte den Text manuell markieren und kopieren (Strg+A, Strg+C).');
+  });
+}
+
+/* ── Datum-Sync ── */
+function syncEndDate() {
+  var start = getVal('eventDate');
+  if (start && days.length > 0) {
+    var d = new Date(start);
+    d.setDate(d.getDate() + days.length - 1);
+    document.getElementById('eventEndDate').value = d.toISOString().split('T')[0];
+  }
+}
+
+function syncDaysFromEnd() {
+  var start = getVal('eventDate');
+  var end = getVal('eventEndDate');
+  if (!start || !end) return;
+  var diff = Math.round((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24)) + 1;
+  if (diff < 1 || diff > 30) return;
+  while (days.length < diff) days.push({ type: 'event', acts: 1 });
+  while (days.length > diff) days.pop();
+  renderDays();
+}
+
+/* ── E-Mail senden ── */
+function sendEmailTo(fixedEmail) {
+  var email = fixedEmail || document.getElementById('sendToEmail').value.trim();
+  if (!email || !isValidEmail(email)) {
+    var inp = document.getElementById('sendToEmail');
+    inp.style.borderColor = '#e74c3c';
+    inp.focus();
+    setTimeout(function() { inp.style.borderColor = ''; }, 2000);
+    return;
+  }
+  var text = document.getElementById('angebotInner').textContent;
+  var eventName = getVal('eventName') || 'Event-Kalkulation';
+  var subject = encodeURIComponent('Angebot: ' + eventName + ' \u2013 Munkenfred Records');
+  var body = encodeURIComponent(text);
+  var mailtoUrl = 'mailto:' + encodeURIComponent(email) + '?subject=' + subject + '&body=' + body;
+
+  if (mailtoUrl.length > 2000) {
+    navigator.clipboard.writeText(text).then(function() {
+      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + subject, '_blank', 'noopener,noreferrer');
+      alert('Der Angebotstext wurde in die Zwischenablage kopiert.\n\nDas E-Mail-Programm \u00f6ffnet sich \u2013 f\u00fcge den Text mit Strg+V / Cmd+V ein.');
+    }).catch(function() {
+      window.open('mailto:' + encodeURIComponent(email) + '?subject=' + subject, '_blank', 'noopener,noreferrer');
+      alert('Bitte den Angebotstext manuell kopieren und in die E-Mail einf\u00fcgen.');
+    });
+  } else {
+    window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
+  }
+}
+
+/* ── Init ── */
+renderDays();
+calc();
+var initBadge = document.getElementById('paketBadge');
+if (initBadge) initBadge.textContent = sel + ' \u2013 ' + PKT[sel] + ' \u20ac';
+</script>
+</body>
+</html>
