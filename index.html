@@ -431,10 +431,18 @@
         <button onclick="sendEmailTo()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:10px 20px;font-size:0.95em;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-weight:500;">Angebot per E-Mail senden</button>
       </div>
       <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-        <button onclick="sendEmailTo('emailadresse15@yahoo.de')" style="background:white;color:var(--text-dim);border:1.5px solid var(--border);border-radius:8px;padding:8px 16px;font-size:0.88em;cursor:pointer;transition:all 0.2s;font-weight:500;">Kopie an Campingplatz-B&uuml;ro</button>
+        <button onclick="sendEmailTo('campingle.gmbh@gmail.com')" style="background:white;color:var(--text-dim);border:1.5px solid var(--border);border-radius:8px;padding:8px 16px;font-size:0.88em;cursor:pointer;transition:all 0.2s;font-weight:500;">Kopie an Campingplatz-B&uuml;ro</button>
         <button onclick="sendEmailTo('info@munkenfredrecords.de')" style="background:white;color:var(--text-dim);border:1.5px solid var(--border);border-radius:8px;padding:8px 16px;font-size:0.88em;cursor:pointer;transition:all 0.2s;font-weight:500;">Kopie an Munkenfred Records</button>
       </div>
-      <p style="font-size:0.85em;color:var(--text-dim);margin-top:10px;">&Ouml;ffnet dein E-Mail-Programm mit dem Angebotstext. Bei langen Texten wird der Inhalt automatisch in die Zwischenablage kopiert.</p>
+      <p style="font-size:0.82em;color:var(--text-dim);margin-top:10px;">&Ouml;ffnet dein E-Mail-Programm. Bei langen Texten wird der Inhalt in die Zwischenablage kopiert.</p>
+    </div>
+
+    <!-- Angebot einreichen -->
+    <div style="margin-top:16px;background:linear-gradient(135deg,rgba(29,122,67,0.06),rgba(0,113,227,0.04));border:1.5px solid var(--accent);border-radius:14px;padding:24px;text-align:center;">
+      <div style="font-size:1.1em;font-weight:700;color:var(--text);margin-bottom:4px;">Angebot abschlie&szlig;en</div>
+      <div style="font-size:0.82em;color:var(--text-dim);margin-bottom:16px;">Sendet das Angebot gleichzeitig an dich und an den Campingplatz.</div>
+      <button onclick="submitAngebot()" id="submitBtn" style="background:var(--accent);color:white;border:none;border-radius:12px;padding:14px 40px;font-size:1em;font-weight:600;cursor:pointer;transition:all 0.25s;box-shadow:0 2px 8px rgba(29,122,67,0.25);letter-spacing:-0.01em;font-family:inherit;">Angebot einreichen &rarr;</button>
+      <div id="submitStatus" style="font-size:0.82em;color:var(--accent);margin-top:10px;min-height:1.2em;"></div>
     </div>
   </div>
 
@@ -1061,10 +1069,10 @@ function genAngebot(angebotNetto, mwst, angebot, isBrutto, dayDetails, eventDays
     + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
     + 'VERANSTALTUNG BEST\u00c4TIGEN ODER ABSAGEN\n\n'
     + '  Veranstaltung best\u00e4tigen:\n'
-    + '  mailto:emailadresse15@yahoo.de?subject=BEST\u00c4TIGUNG:%20' + encodeURIComponent(name) + '\n\n'
+    + '  mailto:campingle.gmbh@gmail.com?subject=BEST\u00c4TIGUNG:%20' + encodeURIComponent(name) + '\n\n'
     + '  Veranstaltung absagen:\n'
-    + '  mailto:emailadresse15@yahoo.de?subject=ABSAGE:%20' + encodeURIComponent(name) + '\n\n'
-    + '  (Link anklicken oder E-Mail senden an: emailadresse15@yahoo.de)\n\n'
+    + '  mailto:campingle.gmbh@gmail.com?subject=ABSAGE:%20' + encodeURIComponent(name) + '\n\n'
+    + '  (Link anklicken oder E-Mail senden an: campingle.gmbh@gmail.com)\n\n'
     + '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n'
     + 'Dieses Angebot ist 4 Wochen g\u00fcltig.\n\n'
     + 'Munkenfred Records\n'
@@ -1302,6 +1310,37 @@ function sendEmailTo(fixedEmail) {
     });
   } else {
     window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
+  }
+}
+
+/* ── Angebot einreichen (an beide Adressen) ── */
+function submitAngebot() {
+  var text = document.getElementById('angebotInner').textContent;
+  var eventName = getVal('eventName') || 'Event-Kalkulation';
+  var subject = encodeURIComponent('Angebot: ' + eventName + ' \u2013 Munkenfred Records');
+  var to = 'campingle.gmbh@gmail.com,info@munkenfredrecords.de';
+  var body = encodeURIComponent(text);
+  var mailtoUrl = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+  var statusEl = document.getElementById('submitStatus');
+  var btn = document.getElementById('submitBtn');
+
+  if (mailtoUrl.length > 2000) {
+    navigator.clipboard.writeText(text).then(function() {
+      window.open('mailto:' + to + '?subject=' + subject, '_blank', 'noopener,noreferrer');
+      statusEl.textContent = '\u2705 Text in Zwischenablage \u2013 bitte mit Strg+V / Cmd+V einf\u00fcgen';
+      btn.textContent = 'Eingereicht \u2713';
+      btn.style.background = '#34c759';
+      setTimeout(function() { btn.textContent = 'Angebot einreichen \u2192'; btn.style.background = ''; statusEl.textContent = ''; }, 5000);
+    }).catch(function() {
+      window.open('mailto:' + to + '?subject=' + subject, '_blank', 'noopener,noreferrer');
+      statusEl.textContent = 'Bitte den Text manuell kopieren und einf\u00fcgen.';
+    });
+  } else {
+    window.open(mailtoUrl, '_blank', 'noopener,noreferrer');
+    btn.textContent = 'Eingereicht \u2713';
+    btn.style.background = '#34c759';
+    statusEl.textContent = '\u2705 E-Mail-Programm ge\u00f6ffnet \u2013 senden nicht vergessen!';
+    setTimeout(function() { btn.textContent = 'Angebot einreichen \u2192'; btn.style.background = ''; statusEl.textContent = ''; }, 5000);
   }
 }
 
